@@ -1,0 +1,48 @@
+<project name="BinaryDump" default="all" basedir=".">
+
+	<property name="build" value="${basedir}/build"/>
+
+	<property name="source" value="${basedir}/source"/>
+
+	<property name="java" value="${source}/java"/>
+	<property name="binarydump" value="org/jp/binarydump"/>
+
+	<property name="libraries" value="${basedir}/libraries"/>
+	<property name="products" value="${basedir}/products"/>
+	<property name="run" value="${basedir}/run"/>
+
+	<target name="clean">
+		<delete dir="${build}" failonerror="false"/>
+	</target>
+
+	<target name="init">
+		<mkdir dir="${build}"/>
+		<tstamp>
+			<format property="today" pattern="dd-MMMM-yyyy"/>
+			<format property="now" pattern="HH:mm:ss"/>
+		</tstamp>
+		<echo message="Time now ${now}"/>
+		<mkdir dir="${build}"/>
+		<mkdir dir="${products}"/>
+		<mkdir dir="${run}"/>
+	</target>
+
+	<target name="binarydump" depends="init">
+		<javac destdir="${build}" optimize="on"
+			debug="true" debuglevel="lines,vars,source">
+			<src path="${java}/${binarydump}"/>
+			<compilerarg value="-Xlint:unchecked"/>
+			<compilerarg value="-Xlint:deprecation"/>
+		</javac>
+		<jar jarfile="${products}/BinaryDump.jar">
+			<manifest>
+				<attribute name="Main-Class" value="org.jp.binarydump.BinaryDump"/>
+				<attribute name="Implementation-Version" value="${today} @ ${now}"/>
+			</manifest>
+			<fileset dir="${build}" includes="${binarydump}/**"/>
+		</jar>
+	</target>
+	
+	<target name="all" depends="clean, binarydump"/>
+
+</project>
