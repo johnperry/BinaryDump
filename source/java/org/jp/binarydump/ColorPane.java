@@ -5,6 +5,10 @@ import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.text.*;
 
+/**
+ * This is a simple version of ColorPane,
+ * just for use in BinaryDump
+ */
 public class ColorPane extends JTextPane {
 
 	public int lineHeight;
