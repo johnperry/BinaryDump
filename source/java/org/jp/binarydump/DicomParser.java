@@ -78,7 +78,7 @@ public class DicomParser extends Parser {
 	}
 
 	private void listElements() {
-		JFrame listFrame = new JFrame("DicomElement List");
+		JFrame listFrame = new JFrame(parent.getFile().getName());
 		JScrollPane jsp = new JScrollPane();
 		listFrame.getContentPane().add(jsp,BorderLayout.CENTER);
 		JTextPane jtp = new JTextPane();
@@ -96,7 +96,7 @@ public class DicomParser extends Parser {
 		//Now, size and position the JFrame and display it.
 		//The height is set to the height of the parent, and
 		//the location is set just to the right of the parent.
-		int width = 300;
+		int width = 450;
 		int height = 700;
 		Toolkit t = parent.getToolkit();
 		Dimension scr = t.getScreenSize ();

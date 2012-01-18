@@ -12,7 +12,7 @@ public class BinaryDump extends JFrame {
 
 	static Color 	background = Color.getHSBColor(0.58f, 0.17f, 0.95f);
 	JFileChooser 	chooser = null;
-    File			dataFile;
+    File			dataFile = null;
     TextPanel		textPanel;
     FooterPanel		footerPanel;
     String			windowTitle = "Binary Dump Utility - v2";
@@ -54,6 +54,10 @@ public class BinaryDump extends JFrame {
 
 	public void redisplay() {
 		if (textPanel != null) textPanel.dumpFile();
+	}
+
+	public File getFile() {
+		return dataFile;
 	}
 
     private void initComponents() {
@@ -192,7 +196,7 @@ public class BinaryDump extends JFrame {
 				scrollbar.setMaximum (fileLength-1);
                 dumpFile();
                 String contentType = parser.getContentType();
-				footerPanel.setMessage(contentType);
+				footerPanel.setMessage(contentType + "; length = "+longFileLength);
 				fileProperties =
 					dataFile.getAbsolutePath() + "\n" +
 					"Length = " + fileLength + "\n" +

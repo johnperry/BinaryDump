@@ -18,8 +18,8 @@
 	<target name="init">
 		<mkdir dir="${build}"/>
 		<tstamp>
-			<format property="today" pattern="dd-MMMM-yyyy"/>
-			<format property="now" pattern="HH:mm:ss"/>
+			<format property="today" pattern="yyyy.MM.dd"/>
+			<format property="now" pattern="HH:mm:ss z"/>
 		</tstamp>
 		<echo message="Time now ${now}"/>
 		<mkdir dir="${build}"/>
@@ -38,11 +38,14 @@
 			<manifest>
 				<attribute name="Main-Class" value="org.jp.binarydump.BinaryDump"/>
 				<attribute name="Implementation-Version" value="${today} @ ${now}"/>
+	            <attribute name="Date" value="${today} at ${now}"/>
+	            <attribute name="Java-Version" value="${ant.java.version}"/>
+	            <attribute name="Description" value="Binary dump utility"/>
 			</manifest>
 			<fileset dir="${build}" includes="${binarydump}/**"/>
 		</jar>
 	</target>
-	
+
 	<target name="all" depends="clean, binarydump"/>
 
 </project>
