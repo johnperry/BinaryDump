@@ -73,6 +73,15 @@ public class DicomParser extends Parser {
 			});
 			saveItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK));
 			menu.add(saveItem);
+
+			JMenuItem truncateItem = new JMenuItem("Truncate after Pixels");
+			truncateItem.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent evt) {
+					truncate();
+				}
+			});
+			truncateItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.CTRL_MASK));
+			menu.add(truncateItem);
 		}
 		return menu;
 	}
@@ -133,6 +142,32 @@ public class DicomParser extends Parser {
 							else break;
 						}
 					}
+				}
+				catch (Exception ex) { }
+				finally {
+					if (bos != null) {
+						try { bos.flush(); }
+						catch (Exception ignore) { }
+						try { bos.close(); }
+						catch (Exception ignore) { }
+					}
+				}
+			}
+		}
+	}
+
+	private void truncate() {
+		DicomElement stopElement = nextElementAfter(pixels);
+		File outputFile = null;
+		if (stopElement != null) {
+			JFileChooser chooser = new JFileChooser(parent.dataFile.getParentFile());
+			chooser.setSelectedFile(new File(parent.dataFile.getAbsolutePath() + ".truncated.dcm"));
+			if (chooser.showSaveDialog(parent) == JFileChooser.APPROVE_OPTION) {
+				outputFile = chooser.getSelectedFile();
+				BufferedOutputStream bos = null;
+				try {
+					bos = new BufferedOutputStream(new FileOutputStream(outputFile));
+					write(bos, 0, stopElement.tagAdrs);
 				}
 				catch (Exception ex) { }
 				finally {
@@ -228,6 +263,28 @@ public class DicomParser extends Parser {
 		catch (Exception ex) { return null; }
 		if (el.length <= 0) return null;
 		return el;
+	}
+
+	private DicomElement nextElementAfter(DicomElement target) {
+		ListIterator<DicomElement> lit = elementList.listIterator();
+		while (lit.hasNext()) {
+			DicomElement current = lit.next();
+			if (current.tag == target.tag) {
+				DicomElement next = null;
+				while (lit.hasNext()) {
+					next = lit.next();
+					if ((next.tag & 0xffff0000) != 0xfffe0000) break;
+					next = null;
+				}
+				if (next != null) {
+					return next;
+				}
+				else {
+					return null;
+				}
+			}
+		}
+		return null;
 	}
 
 	class ColorField {
