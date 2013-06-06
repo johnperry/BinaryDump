@@ -19,12 +19,14 @@ public class BinaryDump extends JFrame {
     int 			width = 580;
     int 			height = 700;
     JMenu 			parserMenu = null;
+    PropertiesFile  props = null;
 
     public static void main(String[] args) {
         new BinaryDump();
     }
 
     public BinaryDump() {
+		props = new PropertiesFile(new File("BinaryDump.properties"));
     	initComponents();
     	openFile();
     }
@@ -32,10 +34,17 @@ public class BinaryDump extends JFrame {
 	private void openFile() {
 		if (chooser == null) {
 			File here = new File(System.getProperty("user.dir"));
+			String dir = props.getProperty("dir");
+			if (dir != null) {
+				File dirFile = new File(dir);
+				if (dirFile.exists()) here = dirFile;
+			}
 			chooser = new JFileChooser(here);
 		}
 		if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-			dataFile = chooser.getSelectedFile();
+			dataFile = chooser.getSelectedFile().getAbsoluteFile();
+			props.setProperty("dir", dataFile.getParentFile().getAbsolutePath());
+			props.store();
 			setTitle(dataFile.getAbsolutePath());
 			textPanel.setFile(dataFile);
 			JMenuBar jmb = getJMenuBar();

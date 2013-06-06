@@ -22,6 +22,8 @@ public class DicomParser extends Parser {
 	int group2End = Integer.MAX_VALUE;
 	int lastIndex = 0;
 	LinkedList<DicomElement> elementList;
+
+	static byte[] seqDelimTag = { (byte)0xFE, (byte)0xFF, (byte)0xDD, (byte)0xE0, 0, 0, 0, 0 };
 
 	public DicomParser(BinaryDump parent, RandomAccessFile in) {
 		super(parent, in);
@@ -82,6 +84,15 @@ public class DicomParser extends Parser {
 			});
 			truncateItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.CTRL_MASK));
 			menu.add(truncateItem);
+
+			JMenuItem removePrivateGroupsItem = new JMenuItem("Remove Private Groups");
+			removePrivateGroupsItem.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent evt) {
+					removePrivateGroups();
+				}
+			});
+			removePrivateGroupsItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.CTRL_MASK));
+			menu.add(removePrivateGroupsItem);
 		}
 		return menu;
 	}
@@ -158,12 +169,11 @@ public class DicomParser extends Parser {
 
 	private void truncate() {
 		DicomElement stopElement = nextElementAfter(pixels);
-		File outputFile = null;
 		if (stopElement != null) {
 			JFileChooser chooser = new JFileChooser(parent.dataFile.getParentFile());
 			chooser.setSelectedFile(new File(parent.dataFile.getAbsolutePath() + ".truncated.dcm"));
 			if (chooser.showSaveDialog(parent) == JFileChooser.APPROVE_OPTION) {
-				outputFile = chooser.getSelectedFile();
+				File outputFile = chooser.getSelectedFile();
 				BufferedOutputStream bos = null;
 				try {
 					bos = new BufferedOutputStream(new FileOutputStream(outputFile));
@@ -177,6 +187,56 @@ public class DicomParser extends Parser {
 						try { bos.close(); }
 						catch (Exception ignore) { }
 					}
+				}
+			}
+		}
+	}
+
+	private void removePrivateGroups() {
+		ListIterator<DicomElement> lit = elementList.listIterator();
+		if (!lit.hasNext()) return;
+		DicomElement currentElement = lit.next();
+
+		JFileChooser chooser = new JFileChooser(parent.dataFile.getParentFile());
+		chooser.setSelectedFile(new File(parent.dataFile.getAbsolutePath() + ".rpg.dcm"));
+		if (chooser.showSaveDialog(parent) == JFileChooser.APPROVE_OPTION) {
+			File outputFile = chooser.getSelectedFile();
+			BufferedOutputStream bos = null;
+			try {
+				bos = new BufferedOutputStream(new FileOutputStream(outputFile));
+				write(bos, 0, currentElement.tagAdrs);
+				DicomElement nextElement = null;
+				while (!currentElement.isPixels() && lit.hasNext()) {
+					nextElement = lit.next();
+					if (!currentElement.isPrivateGroup()) {
+						write(bos, currentElement.tagAdrs, nextElement.tagAdrs - currentElement.tagAdrs);
+					}
+					if (currentElement.isPixels()) break;
+					currentElement = nextElement;
+					nextElement = null;
+				}
+				if (currentElement.isPixels()) {
+					int len = (int)(in.length() - currentElement.tagAdrs);
+					nextElement = nextElementAfter(pixels);
+					if (nextElement != null) len = nextElement.tagAdrs - currentElement.tagAdrs;
+					write(bos, currentElement.tagAdrs, len);
+
+					//See if there is a Sequence Delimitation Tag
+					byte[] sdt = new byte[8];
+					in.seek(currentElement.tagAdrs + len - 8);
+					in.read(sdt, 0, 8);
+					if (!isSequenceDelimitationTag(sdt)) {
+						bos.write(seqDelimTag, 0 , seqDelimTag.length);
+					}
+				}
+			}
+			catch (Exception ex) { }
+			finally {
+				if (bos != null) {
+					try { bos.flush(); }
+					catch (Exception ignore) { }
+					try { bos.close(); }
+					catch (Exception ignore) { }
 				}
 			}
 		}
@@ -266,25 +326,27 @@ public class DicomParser extends Parser {
 	}
 
 	private DicomElement nextElementAfter(DicomElement target) {
+		DicomElement next = null;
 		ListIterator<DicomElement> lit = elementList.listIterator();
 		while (lit.hasNext()) {
 			DicomElement current = lit.next();
 			if (current.tag == target.tag) {
-				DicomElement next = null;
 				while (lit.hasNext()) {
 					next = lit.next();
 					if ((next.tag & 0xffff0000) != 0xfffe0000) break;
 					next = null;
 				}
-				if (next != null) {
-					return next;
-				}
-				else {
-					return null;
-				}
 			}
 		}
-		return null;
+		return next;
+	}
+
+	private boolean isSequenceDelimitationTag(byte[] sdt) {
+		if (sdt.length < seqDelimTag.length) return false;
+		for (int i=0; i<seqDelimTag.length; i++) {
+			if (sdt[i] != seqDelimTag[i]) return false;
+		}
+		return true;
 	}
 
 	class ColorField {

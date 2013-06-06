@@ -128,6 +128,14 @@ public class DicomElement {
 		return 0;
 	}
 
+	public boolean isPrivateGroup() {
+		return ((tag & 0x10000) != 0);
+	}
+
+	public boolean isPixels() {
+		return (tag == 0x7fe00010);
+	}
+
 	static String zeroes = "00000000";
 	static String spaces = "         ";
 	public String toString() {
