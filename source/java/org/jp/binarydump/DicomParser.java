@@ -93,6 +93,14 @@ public class DicomParser extends Parser {
 			});
 			removePrivateGroupsItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.CTRL_MASK));
 			menu.add(removePrivateGroupsItem);
+
+			JMenuItem fixGroupLengthElementsItem = new JMenuItem("Fix Group Length Elements");
+			fixGroupLengthElementsItem.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent evt) {
+					fixGroupLengthElements();
+				}
+			});
+			menu.add(fixGroupLengthElementsItem);
 		}
 		return menu;
 	}
@@ -220,14 +228,62 @@ public class DicomParser extends Parser {
 					nextElement = nextElementAfter(pixels);
 					if (nextElement != null) len = nextElement.tagAdrs - currentElement.tagAdrs;
 					write(bos, currentElement.tagAdrs, len);
+				}
+			}
+			catch (Exception ex) { }
+			finally {
+				if (bos != null) {
+					try { bos.flush(); }
+					catch (Exception ignore) { }
+					try { bos.close(); }
+					catch (Exception ignore) { }
+				}
+			}
+		}
+	}
 
-					//See if there is a Sequence Delimitation Tag
-					byte[] sdt = new byte[8];
-					in.seek(currentElement.tagAdrs + len - 8);
-					in.read(sdt, 0, 8);
-					if (!isSequenceDelimitationTag(sdt)) {
-						bos.write(seqDelimTag, 0 , seqDelimTag.length);
+	private void fixGroupLengthElements() {
+		ListIterator<DicomElement> lit = elementList.listIterator();
+		if (!lit.hasNext()) return;
+		DicomElement currentElement = lit.next();
+
+		JFileChooser chooser = new JFileChooser(parent.dataFile.getParentFile());
+		chooser.setSelectedFile(new File(parent.dataFile.getAbsolutePath() + ".fgle.dcm"));
+		if (chooser.showSaveDialog(parent) == JFileChooser.APPROVE_OPTION) {
+			File outputFile = chooser.getSelectedFile();
+			BufferedOutputStream bos = null;
+			try {
+				bos = new BufferedOutputStream(new FileOutputStream(outputFile));
+				write(bos, 0, currentElement.tagAdrs);
+				DicomElement nextElement = null;
+				while (!currentElement.isPixels() && lit.hasNext()) {
+					nextElement = lit.next();
+					if (!currentElement.isGroupLength()) {
+						write(bos, currentElement.tagAdrs, nextElement.tagAdrs - currentElement.tagAdrs);
 					}
+					else {
+						int lengthToEnd = 0;
+						DicomElement nextGroup = nextGroupAfter(currentElement);
+						//System.out.println(Integer.toHexString(currentElement.tag)+
+						//				": nextGroup: "+((nextGroup==null) ? "null" : Integer.toHexString(nextGroup.tag)));
+						if (nextGroup != null) {
+							lengthToEnd = nextGroup.tagAdrs - currentElement.tagAdrs - currentElement.length;
+						}
+						else {
+							lengthToEnd = (int)parent.getFile().length() - currentElement.tagAdrs - currentElement.length;
+							//System.out.println("...lengthToEnd = "+Integer.toHexString(lengthToEnd));
+						}
+						write(bos, currentElement, lengthToEnd);
+					}
+					if (currentElement.isPixels()) break;
+					currentElement = nextElement;
+					nextElement = null;
+				}
+				if (currentElement.isPixels()) {
+					int len = (int)(in.length() - currentElement.tagAdrs);
+					nextElement = nextElementAfter(pixels);
+					if (nextElement != null) len = nextElement.tagAdrs - currentElement.tagAdrs;
+					write(bos, currentElement.tagAdrs, len);
 				}
 			}
 			catch (Exception ex) { }
@@ -250,6 +306,16 @@ public class DicomParser extends Parser {
 			bos.write(b, 0, n);
 			length -= n;
 		}
+	}
+
+	private void write(BufferedOutputStream bos, DicomElement el, int value) throws Exception {
+		write(bos, el.tagAdrs, el.valueAdrs - el.tagAdrs);
+		byte[] b = new byte[4];
+		b[0] = (byte)(value & 0xff);
+		b[1] = (byte)((value >>> 8) & 0xff);
+		b[2] = (byte)((value >>> 16) & 0xff);
+		b[3] = (byte)((value >>> 24) & 0xff);
+		bos.write(b, 0, 4);
 	}
 
 	private void getParams() {
@@ -334,6 +400,22 @@ public class DicomParser extends Parser {
 				while (lit.hasNext()) {
 					next = lit.next();
 					if ((next.tag & 0xffff0000) != 0xfffe0000) break;
+					next = null;
+				}
+			}
+		}
+		return next;
+	}
+
+	private DicomElement nextGroupAfter(DicomElement target) {
+		DicomElement next = null;
+		ListIterator<DicomElement> lit = elementList.listIterator();
+		while (lit.hasNext()) {
+			DicomElement current = lit.next();
+			if (current.tag == target.tag) {
+				while (lit.hasNext()) {
+					next = lit.next();
+					if ((next.tag & 0xffff0000) != (current.tag & 0xffff0000)) break;
 					next = null;
 				}
 			}

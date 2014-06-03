@@ -136,6 +136,14 @@ public class DicomElement {
 		return (tag == 0x7fe00010);
 	}
 
+	public boolean isGroupLength() {
+		return ((tag & 0xffff) == 0);
+	}
+
+	public boolean isMetadata() {
+		return ((tag >>> 16) < 8);
+	}
+
 	static String zeroes = "00000000";
 	static String spaces = "         ";
 	public String toString() {

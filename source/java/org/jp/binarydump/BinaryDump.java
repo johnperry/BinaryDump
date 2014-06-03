@@ -20,6 +20,8 @@ public class BinaryDump extends JFrame {
     int 			height = 700;
     JMenu 			parserMenu = null;
     PropertiesFile  props = null;
+    LinkedList<String> recent = null;
+    JMenu			recentMenu = null;
 
     public static void main(String[] args) {
         new BinaryDump();
@@ -27,6 +29,7 @@ public class BinaryDump extends JFrame {
 
     public BinaryDump() {
 		props = new PropertiesFile(new File("BinaryDump.properties"));
+		recent = getRecentFiles();
     	initComponents();
     	openFile();
     }
@@ -44,14 +47,60 @@ public class BinaryDump extends JFrame {
 		if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
 			dataFile = chooser.getSelectedFile().getAbsoluteFile();
 			props.setProperty("dir", dataFile.getParentFile().getAbsolutePath());
+			addRecentFile(dataFile);
+			saveRecentFiles();
 			props.store();
-			setTitle(dataFile.getAbsolutePath());
-			textPanel.setFile(dataFile);
-			JMenuBar jmb = getJMenuBar();
-			if (parserMenu != null) jmb.remove(parserMenu);
-			parserMenu = textPanel.parser.getMenu();
-			if (parserMenu != null) jmb.add(parserMenu);
-			setJMenuBar(jmb);
+			setRecentMenuItems();
+			openFile(dataFile);
+		}
+	}
+
+	private void openFile(File dataFile) {
+		this.dataFile = dataFile;
+		setTitle(dataFile.getAbsolutePath());
+		textPanel.setFile(dataFile);
+		JMenuBar jmb = getJMenuBar();
+		if (parserMenu != null) jmb.remove(parserMenu);
+		parserMenu = textPanel.parser.getMenu();
+		if (parserMenu != null) jmb.add(parserMenu);
+		setJMenuBar(jmb);
+	}
+
+	private LinkedList<String> getRecentFiles() {
+		String[] keys = new String[1];
+		keys = props.stringPropertyNames().toArray(keys);
+		Arrays.sort(keys);
+		LinkedList<String> recent = new LinkedList<String>();
+		for (String key : keys) {
+			if (key.startsWith("recent[")) recent.add(props.getProperty(key));
+		}
+		return recent;
+	}
+
+	private void addRecentFile(File file) {
+		recent.push(file.getAbsolutePath());
+		if (recent.size() > 10) recent.removeLast();
+	}
+
+	private void saveRecentFiles() {
+		int k = 0;
+		for (String file : recent) {
+			props.setProperty("recent["+k+"]", file);
+			k++;
+		}
+	}
+
+	private void setRecentMenuItems() {
+		recentMenu.removeAll();
+		for (String file : recent) {
+			JMenuItem recentItem = new JMenuItem(file);
+			recentItem.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent evt) {
+					JMenuItem fileItem = (JMenuItem)evt.getSource();
+					openFile( new File(fileItem.getText()) );
+				}
+			});
+			recentMenu.add(recentItem);
 		}
 	}
 
@@ -75,30 +124,35 @@ public class BinaryDump extends JFrame {
 		JMenu fileMenu = new JMenu();
 		fileMenu.setText("File");
 
-		JMenuItem open = new JMenuItem("Open file...");
-		open.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O,InputEvent.CTRL_MASK));
-		open.addActionListener(new ActionListener() {
+		JMenuItem openItem = new JMenuItem("Open file...");
+		openItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O,InputEvent.CTRL_MASK));
+		openItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
 				openFile();
 			}
 		});
-		fileMenu.add(open);
+		fileMenu.add(openItem);
 
-		JMenuItem props = new JMenuItem("File properties...");
-		props.addActionListener(new ActionListener() {
+		recentMenu = new JMenu();
+		recentMenu.setText("Open recent file");
+		fileMenu.add(recentMenu);
+		setRecentMenuItems();
+
+		JMenuItem propsItem = new JMenuItem("File properties...");
+		propsItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
 				fileProperties();
 			}
 		});
-		fileMenu.add(props);
+		fileMenu.add(propsItem);
 
-		JMenuItem exit = new JMenuItem("Exit");
-		exit.addActionListener(new ActionListener() {
+		JMenuItem exitItem = new JMenuItem("Exit");
+		exitItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
 				exitApp();
 			}
 		});
-		fileMenu.add(exit);
+		fileMenu.add(exitItem);
 
 		menuBar.add(fileMenu);
 		setJMenuBar(menuBar);
