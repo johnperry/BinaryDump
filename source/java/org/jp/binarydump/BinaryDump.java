@@ -104,9 +104,24 @@ public class BinaryDump extends JFrame {
 		}
 	}
 
+	private void gotoAddress() {
+		if (dataFile != null) {
+			String s = JOptionPane.showInputDialog(this, "Go to address:");
+			try {
+				int adrs = Integer.parseInt(s.trim(), 16);
+				textPanel.dumpFile(adrs);
+			}
+			catch (Exception ignore) { }
+		}
+	}
+
+	public void gotoAddress(int adrs) {
+		textPanel.dumpFile(adrs);
+	}
+
 	private void fileProperties() {
 		if (dataFile != null) {
-			JOptionPane.showMessageDialog(this,textPanel.fileProperties);
+			JOptionPane.showMessageDialog(this, textPanel.fileProperties);
 		}
 	}
 
@@ -137,6 +152,15 @@ public class BinaryDump extends JFrame {
 		recentMenu.setText("Open recent file");
 		fileMenu.add(recentMenu);
 		setRecentMenuItems();
+
+		JMenuItem gotoItem = new JMenuItem("Go to...");
+		gotoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G,InputEvent.CTRL_MASK));
+		gotoItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				gotoAddress();
+			}
+		});
+		fileMenu.add(gotoItem);
 
 		JMenuItem propsItem = new JMenuItem("File properties...");
 		propsItem.addActionListener(new ActionListener() {
@@ -281,6 +305,10 @@ public class BinaryDump extends JFrame {
 		public void mouseWheelMoved(MouseWheelEvent evt) {
 			int deltaAdrs = evt.getUnitsToScroll() * 2 * 0x10;
 			scrollbar.setValue(scrollbar.getValue() + deltaAdrs);
+		}
+
+		public void dumpFile(int adrs) {
+			scrollbar.setValue(adrs & 0xfffffff0);
 		}
 
 		public void dumpFile () {

@@ -17,6 +17,7 @@ public class DicomElement {
 	public int lenValue;
 	public int length;
 	public int valueAdrs;
+	public String data;
 
 	RandomAccessFile in;
 	DicomXfrSyntax dxs;
@@ -57,6 +58,9 @@ public class DicomElement {
 		lenValue = getLength(lenAdrs,lenLen);
 		valueAdrs = lenAdrs + lenLen;
 		length = tagLen + vrLen + lenLen + Math.max(lenValue,0);
+
+		int dataLen = Math.min( Math.max(lenValue, 0), 64);
+		data = getPrintableValue(dataLen);
 	}
 
 	private int getTag(int adrs) throws Exception {
@@ -115,6 +119,28 @@ public class DicomElement {
 		return "";
 	}
 
+	public String getPrintableValue(int len) {
+		try {
+			if (!vr.equals("SQ") && !vr.equals("OB") && !vr.equals("US") && !vr.equals("UL") && (tag != 0x7fe00010)) {
+				in.seek(lenAdrs + lenLen);
+				byte[] bb = new byte[len];
+				in.read(bb);
+				StringBuffer sb = new StringBuffer();
+				for (byte b : bb) sb.append(printable(b));
+				return sb.toString();
+			}
+		}
+		catch (Exception ex) { }
+		return "";
+	}
+
+	private String printable(byte b) {
+		byte c[] = new byte[1];
+		c[0] = b;
+		if ((b >= (byte)0x20) && (b <= (byte)0x7f)) return new String( c );
+		return "~";
+	}
+
 	public int getIntValue() {
 		if (lenValue != 4) return 0;
 		try {
@@ -154,7 +180,7 @@ public class DicomElement {
 		tagString = "(" + tagString.substring(0,4) + "," + tagString.substring(4) + ")";
 		String lenString = Integer.toHexString(lenValue);
 		lenString = spaces.substring(0,9 - lenString.length()) + lenString;
-		return (adrsString + "/ " + tagString + " " + vr + lenString + "\n").toUpperCase();
+		return ((adrsString + "/ " + tagString + " " + vr + lenString).toUpperCase() + " " + data + "\n");
 	}
 }
 

@@ -11,7 +11,7 @@ import java.util.LinkedList;
 import java.util.ListIterator;
 import javax.swing.*;
 
-public class DicomParser extends Parser {
+public class DicomParser extends Parser implements MouseListener {
 
 	int offset;
 	ColorField[] fields;
@@ -23,6 +23,10 @@ public class DicomParser extends Parser {
 	int lastIndex = 0;
 	LinkedList<DicomElement> elementList;
 
+	AttachedFrame listFrame = null;
+	ScrolledEditorPanel editorPanel = null;
+	JEditorPane editor = null;
+
 	static byte[] seqDelimTag = { (byte)0xFE, (byte)0xFF, (byte)0xDD, (byte)0xE0, 0, 0, 0, 0 };
 
 	public DicomParser(BinaryDump parent, RandomAccessFile in) {
@@ -106,35 +110,46 @@ public class DicomParser extends Parser {
 	}
 
 	private void listElements() {
-		JFrame listFrame = new JFrame(parent.getFile().getName());
-		JScrollPane jsp = new JScrollPane();
-		listFrame.getContentPane().add(jsp,BorderLayout.CENTER);
-		JTextPane jtp = new JTextPane();
-		jtp.setContentType("text/html");
-		jsp.setViewportView(jtp);
+		listFrame = new AttachedFrame(parent, parent.getFile().getName(), 500, Color.white);
+		editorPanel = new ScrolledEditorPanel();
+		listFrame.setCenterComponent(editorPanel);
 		ListIterator<DicomElement> it = elementList.listIterator(0);
 		StringBuffer sb = new StringBuffer();
-		sb.append("<pre>");
+		sb.append("<pre>\n");
 		if (dsc != null) sb.append(dsc.name + "\n\n");
 		while (it.hasNext()) sb.append(it.next().toString());
-		sb.append("</pre>");
-		jtp.setText(sb.toString());
-		jtp.setCaretPosition(0);
-
-		//Now, size and position the JFrame and display it.
-		//The height is set to the height of the parent, and
-		//the location is set just to the right of the parent.
-		int width = 450;
-		int height = 700;
-		Toolkit t = parent.getToolkit();
-		Dimension scr = t.getScreenSize ();
-		Dimension parentSize = parent.getSize();
-		listFrame.setSize(width,parentSize.height);
-		Point parentLocation = parent.getLocation();
-		int x = parentLocation.x + parentSize.width;
-		if (x + width > scr.width) x = scr.width - width;
-		listFrame.setLocation(new Point(x,parentLocation.y));
+		sb.append("</pre>\n");
+		editor = editorPanel.getEditor();
+		editor.setText(sb.toString());
+		editor.addMouseListener(this);
 		listFrame.setVisible(true);
+		listFrame.attach();
+	}
+
+	public void mouseClicked(MouseEvent e) { }
+	public void mouseEntered(MouseEvent e) { }
+	public void mouseExited(MouseEvent e) { }
+	public void mousePressed(MouseEvent e) { }
+
+	public void mouseReleased(MouseEvent e) {
+		if (editor != null) {
+			int dot = editor.getCaretPosition();
+			if (dot < 20) return;
+			try {
+				String text = editor.getText(Math.max(dot-15, 0),30);
+				int k = 15;
+				while ((k<30) && (text.charAt(k)!='/')) k++;
+				if (k < 30) {
+					int kk = k-1;
+					while ((kk>0) && !Character.isWhitespace(text.charAt(kk))) kk--;
+					if (kk > 0) {
+						int adrs = Integer.parseInt(text.substring(kk+1, k), 16);
+						parent.gotoAddress(adrs);
+					}
+				}
+			}
+			catch (Exception ignore) { }
+		}
 	}
 
 	private void savePixels() {

@@ -16,6 +16,8 @@ public class Parser {
 		if (parser.isType()) return parser;
 		parser = new WaveParser(parent, in);
 		if (parser.isType()) return parser;
+		parser = new JPEGParser(parent, in);
+		if (parser.isType()) return parser;
 		return new Parser(parent,in);
 	}
 
