@@ -17,7 +17,7 @@ public class ScrolledEditorPanel extends JPanel {
 	TrackingJTextPane editorPane;
 
 	public ScrolledEditorPanel() {
-		this("text/html", Color.white);
+		this("text/plain", Color.white);
 	}
 
 	public ScrolledEditorPanel(String contentType, Color bgColor) {
