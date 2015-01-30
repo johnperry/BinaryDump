@@ -43,6 +43,7 @@ public class BinaryDump extends JFrame {
 				if (dirFile.exists()) here = dirFile;
 			}
 			chooser = new JFileChooser(here);
+			chooser.getActionMap().get("viewTypeDetails").actionPerformed(null);
 		}
 		if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
 			dataFile = chooser.getSelectedFile().getAbsoluteFile();
