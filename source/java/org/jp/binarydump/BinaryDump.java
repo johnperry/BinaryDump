@@ -68,7 +68,7 @@ public class BinaryDump extends JFrame {
 	}
 
 	private LinkedList<String> getRecentFiles() {
-		String[] keys = new String[1];
+		String[] keys = new String[0];
 		keys = props.stringPropertyNames().toArray(keys);
 		Arrays.sort(keys);
 		LinkedList<String> recent = new LinkedList<String>();
