@@ -31,7 +31,7 @@
 		<javac destdir="${build}" optimize="on"
 			includeantruntime="false"
 			debug="true" debuglevel="lines,vars,source">
-			<src path="${java}/${binarydump}"/>
+			<src path="${java}"/>
 			<compilerarg value="-Xlint:unchecked"/>
 			<compilerarg value="-Xlint:deprecation"/>
 		</javac>
