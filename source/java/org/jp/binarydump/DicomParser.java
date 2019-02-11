@@ -110,7 +110,7 @@ public class DicomParser extends Parser implements MouseListener {
 	}
 
 	private void listElements() {
-		listFrame = new AttachedFrame(parent, parent.getFile().getName(), 500, Color.white);
+		listFrame = new AttachedFrame(parent, parent.getFile().getName(), 750, Color.white);
 		editorPanel = new ScrolledEditorPanel();
 		listFrame.setCenterComponent(editorPanel);
 		ListIterator<DicomElement> it = elementList.listIterator(0);

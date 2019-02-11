@@ -48,12 +48,15 @@ public class BinaryDump extends JFrame {
 		if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
 			dataFile = chooser.getSelectedFile().getAbsoluteFile();
 			props.setProperty("dir", dataFile.getParentFile().getAbsolutePath());
-			addRecentFile(dataFile);
-			saveRecentFiles();
-			props.store();
-			setRecentMenuItems();
 			openFile(dataFile);
 		}
+	}
+	
+	private void updateRecentFiles(File dataFile) {
+		addRecentFile(dataFile);
+		saveRecentFiles();
+		props.store();
+		setRecentMenuItems();
 	}
 
 	private void openFile(File dataFile) {
@@ -65,6 +68,7 @@ public class BinaryDump extends JFrame {
 		parserMenu = textPanel.parser.getMenu();
 		if (parserMenu != null) jmb.add(parserMenu);
 		setJMenuBar(jmb);
+		updateRecentFiles(dataFile);
 	}
 
 	private LinkedList<String> getRecentFiles() {
@@ -79,11 +83,19 @@ public class BinaryDump extends JFrame {
 	}
 
 	private void addRecentFile(File file) {
-		recent.push(file.getAbsolutePath());
+		String path = file.getAbsolutePath();
+		int k = -1;
+		while ( (k=recent.indexOf(path)) != -1 ) recent.remove(k);
+		recent.push(path);
 		if (recent.size() > 10) recent.removeLast();
 	}
 
 	private void saveRecentFiles() {
+		for (String name : props.stringPropertyNames()) {
+			if (name.startsWith("recent[")) {
+				props.remove(name);
+			}
+		}
 		int k = 0;
 		for (String file : recent) {
 			props.setProperty("recent["+k+"]", file);
@@ -211,7 +223,9 @@ public class BinaryDump extends JFrame {
     private void centerFrame() {
 		Toolkit t = getToolkit();
 		Dimension scr = t.getScreenSize ();
-		setSize(width,height);
+		Dimension size = new Dimension(width, height);
+		setPreferredSize(size);
+		setSize(size);
 		setLocation(
 			new Point(
 				(scr.width - width)/2,
