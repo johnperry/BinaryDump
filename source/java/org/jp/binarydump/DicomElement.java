@@ -4,7 +4,7 @@ import java.io.RandomAccessFile;
 
 public class DicomElement {
 
-	static String[] vrs = new String[] { "OB", "OW", "OF", "SQ", "UT", "UN" };
+	static String[] vrs = new String[] { "OB", "OW", "OF", "SQ", "UT", "UN", "OD", "OL", "UC", "UR" };
 
 	public int tag;
 	public int tagAdrs;
