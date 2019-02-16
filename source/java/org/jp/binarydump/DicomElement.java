@@ -121,7 +121,38 @@ public class DicomElement {
 
 	public String getPrintableValue(int len) {
 		try {
-			if (!vr.equals("SQ") && !vr.equals("OB") && !vr.equals("US") && !vr.equals("UL") && (tag != 0x7fe00010)) {
+			if (vr.equals("OB")) {
+				int minLen = Math.min(len, 10);
+				in.seek(lenAdrs + lenLen);
+				byte[] bb = new byte[minLen];
+				in.read(bb);
+				StringBuffer sb = new StringBuffer();
+				for (byte b : bb) sb.append(String.format("\\%02x",b));
+				return sb.toString();
+			}
+			else if (vr.equals("UL")) {
+				if (len != 4) return "";
+				int intValue = getIntValue();
+				in.seek(lenAdrs + lenLen);
+				byte[] bb = new byte[4];
+				in.read(bb);
+				StringBuffer sb = new StringBuffer();
+				for (byte b : bb) sb.append(String.format("\\%02x",b));
+				sb.append(String.format(" = %d",intValue));
+				return sb.toString();
+			}
+			else if (vr.equals("UL")) {
+				if (len != 2) return "";
+				int shortValue = getShortValue();
+				in.seek(lenAdrs + lenLen);
+				byte[] bb = new byte[2];
+				in.read(bb);
+				StringBuffer sb = new StringBuffer();
+				for (byte b : bb) sb.append(String.format("\\%02x",b));
+				sb.append(String.format(" = %d",shortValue));
+				return sb.toString();
+			}
+			else if (!vr.equals("SQ") && (tag != 0x7fe00010)) {
 				in.seek(lenAdrs + lenLen);
 				byte[] bb = new byte[len];
 				in.read(bb);
@@ -149,6 +180,19 @@ public class DicomElement {
 			in.read(b);
 			if (le) return (((b[3]<<8) | (b[2] & 0xff))<<8 | (b[1] & 0xff))<<8 | (b[0] & 0xff);
 			else return (((b[0]<<8) | (b[1] & 0xff))<<8 | (b[2] & 0xff))<<8 | (b[3] & 0xff);
+		}
+		catch (Exception ex) { }
+		return 0;
+	}
+
+	public int getShortValue() {
+		if (lenValue != 2) return 0;
+		try {
+			in.seek(lenAdrs + lenLen);
+			byte[] b = new byte[lenValue];
+			in.read(b);
+			if (le) return (b[1] & 0xff)<<8 | (b[0] & 0xff);
+			else return (b[0]<<8) | (b[1] & 0xff);
 		}
 		catch (Exception ex) { }
 		return 0;
