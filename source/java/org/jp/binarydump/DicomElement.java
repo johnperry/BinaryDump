@@ -141,7 +141,7 @@ public class DicomElement {
 				sb.append(String.format(" = %d",intValue));
 				return sb.toString();
 			}
-			else if (vr.equals("UL")) {
+			else if (vr.equals("US")) {
 				if (len != 2) return "";
 				int shortValue = getShortValue();
 				in.seek(lenAdrs + lenLen);
