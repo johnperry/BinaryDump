@@ -197,6 +197,33 @@ public class DicomElement {
 		catch (Exception ex) { }
 		return 0;
 	}
+	
+	public boolean isItemTag() {
+		return (tag == 0xFFFEE000);
+	}
+	
+	public boolean isSequenceDelimiterTag() {
+		return (tag == 0xFFFEE0DD);
+	}
+	
+	public int[] getIntArray() {
+		try {
+			if (lenValue%4 == 0) {
+				int[] ints = new int[lenValue/4];
+				in.seek(lenAdrs + lenLen);
+				byte[] b = new byte[lenValue];
+				in.read(b);
+				for (int i=0; i<lenValue/4; i++) {
+					int base = 4*i;
+					if (le) ints[i] = (((b[base+3]<<8) | (b[base+2] & 0xff))<<8 | (b[base+1] & 0xff))<<8 | (b[base+0] & 0xff);
+					else ints[i] = (((b[base+0]<<8) | (b[base+1] & 0xff))<<8 | (b[base+2] & 0xff))<<8 | (b[base+3] & 0xff);
+				}
+				return ints;
+			}
+		}
+		catch (Exception ex) { }
+		return new int[0];
+	}
 
 	public boolean isPrivateGroup() {
 		return ((tag & 0x10000) != 0);

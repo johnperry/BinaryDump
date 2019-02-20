@@ -38,7 +38,6 @@ public class AttachedFrame extends JFrame implements ComponentListener {
 	public void attach() {
 		Dimension componentSize = parent.getSize();
 		Point componentLocation = parent.getLocation();
-		System.out.println("parent size: "+componentSize.width+", "+componentSize.height+"\n");
 		int x = componentLocation.x + componentSize.width;
 		setLocation(new Point(x-15, componentLocation.y));
 		setSize(width, componentSize.height);

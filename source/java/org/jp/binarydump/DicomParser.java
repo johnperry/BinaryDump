@@ -80,6 +80,15 @@ public class DicomParser extends Parser implements MouseListener {
 			saveItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK));
 			menu.add(saveItem);
 
+			JMenuItem listbotItem = new JMenuItem("Check BasicOffsetTable");
+			listbotItem.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent evt) {
+					listBasicOffsetTable();
+				}
+			});
+			listbotItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_B, InputEvent.CTRL_MASK));
+			menu.add(listbotItem);
+
 			JMenuItem truncateItem = new JMenuItem("Truncate after Pixels");
 			truncateItem.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent evt) {
@@ -124,6 +133,48 @@ public class DicomParser extends Parser implements MouseListener {
 		editor.addMouseListener(this);
 		listFrame.setVisible(true);
 		listFrame.attach();
+	}
+	
+	private void listBasicOffsetTable() {
+		listFrame = new AttachedFrame(parent, parent.getFile().getName(), 750, Color.white);
+		editorPanel = new ScrolledEditorPanel();
+		listFrame.setCenterComponent(editorPanel);
+		ListIterator<DicomElement> it = elementList.listIterator(0);
+		while (it.hasNext()) {
+			DicomElement de = it.next();
+			if (de.isPixels()) {
+				if (de.lenValue == -1) {
+					if (it.hasNext()) {
+						DicomElement bot = it.next();
+						if (bot.isItemTag()) {
+							int baseAdrs = -1;
+							int[] botInts = bot.getIntArray();
+							StringBuffer sb = new StringBuffer("</pre>\nBasic Offset Table\n");
+							sb.append("Frame      Offset      Address      ItemTag\n");
+							sb.append("-----      ------      -------      -------\n");
+							for (int k=0; k<botInts.length; k++) {
+								if (it.hasNext()) {
+									DicomElement e = it.next();
+									if (baseAdrs == -1) baseAdrs = e.tagAdrs;
+									int adrs = baseAdrs + botInts[k];
+									int tag = e.tagAdrs;
+									String ok = (adrs == tag) ? "     " : "***  ";
+									sb.append(String.format("%4d %12x %12x %12x  %s\n", (k+1), botInts[k], adrs, tag, ok));
+								}
+							}
+							AttachedFrame botFrame = new AttachedFrame(parent, parent.getFile().getName(), 450, Color.white);
+							ScrolledEditorPanel botPanel = new ScrolledEditorPanel();
+							botFrame.setCenterComponent(botPanel);
+							JEditorPane editor = botPanel.getEditor();
+							editor.setText(sb.toString());
+							botFrame.setVisible(true);
+							botFrame.attach();
+						}
+					}
+				}
+				break;
+			}
+		}
 	}
 
 	public void mouseClicked(MouseEvent e) { }
