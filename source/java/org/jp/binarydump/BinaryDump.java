@@ -10,7 +10,7 @@ import javax.swing.text.*;
 
 public class BinaryDump extends JFrame {
 
-	static Color 	background = Color.getHSBColor(0.58f, 0.17f, 0.95f);
+	public static Color background = Color.getHSBColor(0.58f, 0.17f, 0.95f);
 	JFileChooser 	chooser = null;
     File			dataFile = null;
     TextPanel		textPanel;

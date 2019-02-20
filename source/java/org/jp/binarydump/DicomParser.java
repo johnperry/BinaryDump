@@ -9,7 +9,9 @@ import java.io.RandomAccessFile;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.ListIterator;
+import java.util.regex.*;
 import javax.swing.*;
+import javax.swing.text.*;
 
 public class DicomParser extends Parser implements MouseListener {
 
@@ -183,27 +185,29 @@ public class DicomParser extends Parser implements MouseListener {
 	public void mouseExited(MouseEvent e) { }
 	public void mousePressed(MouseEvent e) { }
 
+	static Pattern pattern = Pattern.compile("\\s*([0-9a-f-A-F]{1,8})/\\s*(\\([0-9a-f-A-F]{1,4},[0-9a-f-A-F]{1,4}\\)).*");
 	public void mouseReleased(MouseEvent e) {
 		if (editor != null) {
 			int dot = editor.getCaretPosition();
 			if (dot < 20) return;
 			try {
-				String text = editor.getText(Math.max(dot-15, 0),30);
-				int k = 15;
-				while ((k<30) && (text.charAt(k)!='/')) k++;
-				if (k < 30) {
-					int kk = k-1;
-					while ((kk>0) && !Character.isWhitespace(text.charAt(kk))) kk--;
-					if (kk > 0) {
-						int adrs = Integer.parseInt(text.substring(kk+1, k), 16);
-						parent.gotoAddress(adrs);
-					}
+				int rowStart = Utilities.getRowStart(editor, dot);
+				String text = editor.getText(rowStart, 60);
+				Matcher matcher = pattern.matcher(text);
+				if (matcher.find()) {
+					String adrsString = matcher.group(1);
+					String tagString = matcher.group(2);
+					String tag = DicomDictionary.getInstance().get(tagString);
+					listFrame.setMessage(tagString + ": " + tag);
+					//System.out.println(adrsString+"  "+tagString);
+					int adrs = Integer.parseInt(adrsString, 16);
+					parent.gotoAddress(adrs);
 				}
 			}
-			catch (Exception ignore) { }
+			catch (Exception ignore) { ignore.printStackTrace(); }
 		}
 	}
-
+	
 	private void savePixels() {
 		File outputFile = null;
 		if (pixels != null) {
