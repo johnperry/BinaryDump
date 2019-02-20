@@ -26,6 +26,9 @@ public class DicomParser extends Parser implements MouseListener {
 	AttachedFrame listFrame = null;
 	ScrolledEditorPanel editorPanel = null;
 	JEditorPane editor = null;
+	AttachedFrame botFrame = null;
+	ScrolledEditorPanel botPanel = null;
+	JEditorPane botEditor = null;
 
 	static byte[] seqDelimTag = { (byte)0xFE, (byte)0xFF, (byte)0xDD, (byte)0xE0, 0, 0, 0, 0 };
 
@@ -136,9 +139,6 @@ public class DicomParser extends Parser implements MouseListener {
 	}
 	
 	private void listBasicOffsetTable() {
-		listFrame = new AttachedFrame(parent, parent.getFile().getName(), 750, Color.white);
-		editorPanel = new ScrolledEditorPanel();
-		listFrame.setCenterComponent(editorPanel);
 		ListIterator<DicomElement> it = elementList.listIterator(0);
 		while (it.hasNext()) {
 			DicomElement de = it.next();
@@ -162,11 +162,12 @@ public class DicomParser extends Parser implements MouseListener {
 									sb.append(String.format("%4d %12x %12x %12x  %s\n", (k+1), botInts[k], adrs, tag, ok));
 								}
 							}
-							AttachedFrame botFrame = new AttachedFrame(parent, parent.getFile().getName(), 450, Color.white);
-							ScrolledEditorPanel botPanel = new ScrolledEditorPanel();
+							sb.append("</PRE>");
+							botFrame = new AttachedFrame(parent, parent.getFile().getName(), 450, Color.white);
+							botPanel = new ScrolledEditorPanel();
 							botFrame.setCenterComponent(botPanel);
-							JEditorPane editor = botPanel.getEditor();
-							editor.setText(sb.toString());
+							botEditor = botPanel.getEditor();
+							botEditor.setText(sb.toString());
 							botFrame.setVisible(true);
 							botFrame.attach();
 						}
