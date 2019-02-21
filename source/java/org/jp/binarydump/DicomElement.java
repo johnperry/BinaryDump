@@ -1,6 +1,8 @@
 package org.jp.binarydump;
 
 import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 public class DicomElement {
 
@@ -152,6 +154,28 @@ public class DicomElement {
 				sb.append(String.format(" = %d",shortValue));
 				return sb.toString();
 			}
+			else if (vr.equals("FL")) {
+				if (len != 4) return "";
+				float floatValue = getFloatValue();
+				in.seek(lenAdrs + lenLen);
+				byte[] bb = new byte[4];
+				in.read(bb);
+				StringBuffer sb = new StringBuffer();
+				for (byte b : bb) sb.append(String.format("\\%02x",b));
+				sb.append(String.format(" = %f",floatValue));
+				return sb.toString();
+			}
+			else if (vr.equals("FD")) {
+				if (len != 8) return "";
+				double doubleValue = getDoubleValue();
+				in.seek(lenAdrs + lenLen);
+				byte[] bb = new byte[8];
+				in.read(bb);
+				StringBuffer sb = new StringBuffer();
+				for (byte b : bb) sb.append(String.format("\\%02x",b));
+				sb.append(String.format(" = %f",doubleValue));
+				return sb.toString();
+			}
 			else if (!vr.equals("SQ") && (tag != 0x7fe00010)) {
 				in.seek(lenAdrs + lenLen);
 				byte[] bb = new byte[len];
@@ -193,6 +217,48 @@ public class DicomElement {
 			in.read(b);
 			if (le) return (b[1] & 0xff)<<8 | (b[0] & 0xff);
 			else return (b[0]<<8) | (b[1] & 0xff);
+		}
+		catch (Exception ex) { }
+		return 0;
+	}
+	
+	public float getFloatValue() {
+		if (lenValue != 4) return 0;
+		try {
+			in.seek(lenAdrs + lenLen);
+			byte[] b = new byte[lenValue];
+			in.read(b);
+			if (le) {
+				ByteBuffer bb = ByteBuffer.wrap(b);
+				bb.order(ByteOrder.LITTLE_ENDIAN);
+				return bb.getFloat();
+			}
+			else {
+				ByteBuffer bb = ByteBuffer.wrap(b);
+				bb.order(ByteOrder.BIG_ENDIAN);
+				return bb.getFloat();
+			}
+		}
+		catch (Exception ex) { }
+		return 0;
+	}
+	
+	public double getDoubleValue() {
+		if (lenValue != 8) return 0;
+		try {
+			in.seek(lenAdrs + lenLen);
+			byte[] b = new byte[lenValue];
+			in.read(b);
+			if (le) {
+				ByteBuffer bb = ByteBuffer.wrap(b);
+				bb.order(ByteOrder.LITTLE_ENDIAN);
+				return bb.getDouble();
+			}
+			else {
+				ByteBuffer bb = ByteBuffer.wrap(b);
+				bb.order(ByteOrder.BIG_ENDIAN);
+				return bb.getDouble();
+			}
 		}
 		catch (Exception ex) { }
 		return 0;
