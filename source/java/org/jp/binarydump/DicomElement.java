@@ -130,7 +130,7 @@ public class DicomElement {
 				for (byte b : bb) sb.append(String.format("\\%02x",b));
 				return sb.toString();
 			}
-			else if (vr.equals("UL")) {
+			else if (vr.equals("UL") || vr.equals("SL")) {
 				if (len != 4) return "";
 				int intValue = getIntValue();
 				in.seek(lenAdrs + lenLen);
@@ -141,7 +141,7 @@ public class DicomElement {
 				sb.append(String.format(" = %d",intValue));
 				return sb.toString();
 			}
-			else if (vr.equals("US")) {
+			else if (vr.equals("US") || vr.equals("SS")) {
 				if (len != 2) return "";
 				int shortValue = getShortValue();
 				in.seek(lenAdrs + lenLen);
@@ -225,6 +225,10 @@ public class DicomElement {
 		return new int[0];
 	}
 
+	public boolean isSQ() {
+		return vr.equals("SQ");
+	}
+
 	public boolean isPrivateGroup() {
 		return ((tag & 0x10000) != 0);
 	}
@@ -244,6 +248,9 @@ public class DicomElement {
 	static String zeroes = "00000000";
 	static String spaces = "         ";
 	public String toString() {
+		return toString(true);
+	}
+	public String toString(boolean showItemValue) {
 		String adrsString = Integer.toHexString(tagAdrs);
 		adrsString = spaces.substring(0,8 - adrsString.length()) + adrsString;
 		String tagString = Integer.toHexString(tag);
@@ -251,7 +258,7 @@ public class DicomElement {
 		tagString = "(" + tagString.substring(0,4) + "," + tagString.substring(4) + ")";
 		String lenString = Integer.toHexString(lenValue);
 		lenString = spaces.substring(0,9 - lenString.length()) + lenString;
-		return ((adrsString + "/ " + tagString + " " + vr + lenString).toUpperCase() + " " + data + "\n");
+		return ((adrsString + "/ " + tagString + " " + vr + lenString).toUpperCase() + " " + (showItemValue?data:"") + "\n");
 	}
 }
 

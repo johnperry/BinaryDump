@@ -129,10 +129,13 @@ public class DicomParser extends Parser implements MouseListener {
 		listFrame.setCenterComponent(editorPanel);
 		ListIterator<DicomElement> it = elementList.listIterator(0);
 		StringBuffer sb = new StringBuffer();
-		sb.append("<pre>\n");
 		if (dsc != null) sb.append(dsc.name + "\n\n");
-		while (it.hasNext()) sb.append(it.next().toString());
-		sb.append("</pre>\n");
+		boolean showItemData = false;
+		while (it.hasNext()) {
+			DicomElement el = it.next();
+			showItemData |= el.isPixels();
+			sb.append(el.toString(!el.isItemTag() || showItemData));
+		}
 		editor = editorPanel.getEditor();
 		editor.setText(sb.toString());
 		editor.addMouseListener(this);
@@ -151,7 +154,7 @@ public class DicomParser extends Parser implements MouseListener {
 						if (bot.isItemTag()) {
 							int baseAdrs = -1;
 							int[] botInts = bot.getIntArray();
-							StringBuffer sb = new StringBuffer("</pre>\nBasic Offset Table\n");
+							StringBuffer sb = new StringBuffer("Basic Offset Table\n");
 							sb.append("Frame      Offset      Address      ItemTag\n");
 							sb.append("-----      ------      -------      -------\n");
 							for (int k=0; k<botInts.length; k++) {
@@ -164,7 +167,6 @@ public class DicomParser extends Parser implements MouseListener {
 									sb.append(String.format("%4d %12x %12x %12x  %s\n", (k+1), botInts[k], adrs, tag, ok));
 								}
 							}
-							sb.append("</PRE>");
 							botFrame = new AttachedFrame(parent, parent.getFile().getName(), 450, Color.white);
 							botPanel = new ScrolledEditorPanel();
 							botFrame.setCenterComponent(botPanel);
@@ -442,7 +444,8 @@ public class DicomParser extends Parser implements MouseListener {
 			if (el.vrLen > 0) list.add(new ColorField(Color.orange,el.vrAdrs));
 			list.add(new ColorField(Color.blue,el.lenAdrs));
 			if (el.lenValue > 0) list.add(new ColorField(Color.black,el.lenAdrs+el.lenLen));
-			adrs += el.length;
+			if (el.isSQ() || (el.isItemTag() && (pixels==null))) adrs = el.valueAdrs;
+			else adrs += el.length;
 		}
 		int len = list.size();
 		fields = new ColorField[len];
