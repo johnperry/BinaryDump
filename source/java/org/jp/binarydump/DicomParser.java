@@ -183,12 +183,11 @@ public class DicomParser extends Parser implements MouseListener, MouseMotionLis
 		}
 	}
 
+	//MouseListener
 	public void mouseClicked(MouseEvent e) { }
 	public void mouseEntered(MouseEvent e) { }
 	public void mouseExited(MouseEvent e) { }
 	public void mousePressed(MouseEvent e) { }
-
-	static Pattern pattern = Pattern.compile("\\s*([0-9a-f-A-F]{1,8})/\\s*(\\([0-9a-f-A-F]{1,4},[0-9a-f-A-F]{1,4}\\)).*");
 	public void mouseReleased(MouseEvent e) {
 		if (editor != null) {
 			int dot = editor.getCaretPosition();
@@ -196,6 +195,16 @@ public class DicomParser extends Parser implements MouseListener, MouseMotionLis
 		}
 	}
 	
+	//MouseMotionListener
+	public void mouseDragged(MouseEvent e) { }
+	public void mouseMoved(MouseEvent e) {
+		if (editor != null) {
+			int dot = editor.viewToModel(e.getPoint());
+			showElement(dot, false);
+		}
+	}
+	
+	static Pattern pattern = Pattern.compile("\\s*([0-9a-f-A-F]{1,8})/\\s*(\\([0-9a-f-A-F]{1,4},[0-9a-f-A-F]{1,4}\\)).*");
 	private void showElement(int dot, boolean reposition) {
 		try {
 			int rowStart = Utilities.getRowStart(editor, dot);
@@ -204,9 +213,8 @@ public class DicomParser extends Parser implements MouseListener, MouseMotionLis
 			if (matcher.find()) {
 				String adrsString = matcher.group(1);
 				String tagString = matcher.group(2);
-				String tag = DicomDictionary.getInstance().get(tagString);
-				listFrame.setMessage(tagString + ": " + tag);
-				//System.out.println(adrsString+"  "+tagString);
+				String keyword = DicomDictionary.getInstance().get(tagString);
+				listFrame.setMessage(tagString + ": " + keyword);
 				if (reposition) {
 					int adrs = Integer.parseInt(adrsString, 16);
 					parent.gotoAddress(adrs);
@@ -214,14 +222,6 @@ public class DicomParser extends Parser implements MouseListener, MouseMotionLis
 			}
 		}
 		catch (Exception ignore) { ignore.printStackTrace(); }
-	}
-	
-	public void mouseDragged(MouseEvent e) { }
-	public void mouseMoved(MouseEvent e) {
-		if (editor != null) {
-			int dot = editor.viewToModel(e.getPoint());
-			showElement(dot, false);
-		}
 	}
 	
 	private void savePixels() {
