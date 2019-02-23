@@ -13,7 +13,7 @@ import java.util.regex.*;
 import javax.swing.*;
 import javax.swing.text.*;
 
-public class DicomParser extends Parser implements MouseListener {
+public class DicomParser extends Parser implements MouseListener, MouseMotionListener {
 
 	int offset;
 	ColorField[] fields;
@@ -139,6 +139,7 @@ public class DicomParser extends Parser implements MouseListener {
 		editor = editorPanel.getEditor();
 		editor.setText(sb.toString());
 		editor.addMouseListener(this);
+		editor.addMouseMotionListener(this);
 		listFrame.setVisible(true);
 		listFrame.attach();
 	}
@@ -191,22 +192,35 @@ public class DicomParser extends Parser implements MouseListener {
 	public void mouseReleased(MouseEvent e) {
 		if (editor != null) {
 			int dot = editor.getCaretPosition();
-			if (dot < 20) return;
-			try {
-				int rowStart = Utilities.getRowStart(editor, dot);
-				String text = editor.getText(rowStart, 60);
-				Matcher matcher = pattern.matcher(text);
-				if (matcher.find()) {
-					String adrsString = matcher.group(1);
-					String tagString = matcher.group(2);
-					String tag = DicomDictionary.getInstance().get(tagString);
-					listFrame.setMessage(tagString + ": " + tag);
-					//System.out.println(adrsString+"  "+tagString);
+			showElement(dot, true);
+		}
+	}
+	
+	private void showElement(int dot, boolean reposition) {
+		try {
+			int rowStart = Utilities.getRowStart(editor, dot);
+			String text = editor.getText(rowStart, 60);
+			Matcher matcher = pattern.matcher(text);
+			if (matcher.find()) {
+				String adrsString = matcher.group(1);
+				String tagString = matcher.group(2);
+				String tag = DicomDictionary.getInstance().get(tagString);
+				listFrame.setMessage(tagString + ": " + tag);
+				//System.out.println(adrsString+"  "+tagString);
+				if (reposition) {
 					int adrs = Integer.parseInt(adrsString, 16);
 					parent.gotoAddress(adrs);
 				}
 			}
-			catch (Exception ignore) { ignore.printStackTrace(); }
+		}
+		catch (Exception ignore) { ignore.printStackTrace(); }
+	}
+	
+	public void mouseDragged(MouseEvent e) { }
+	public void mouseMoved(MouseEvent e) {
+		if (editor != null) {
+			int dot = editor.viewToModel(e.getPoint());
+			showElement(dot, false);
 		}
 	}
 	
