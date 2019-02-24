@@ -208,7 +208,8 @@ public class DicomParser extends Parser implements MouseListener, MouseMotionLis
 	private void showElement(int dot, boolean reposition) {
 		try {
 			int rowStart = Utilities.getRowStart(editor, dot);
-			String text = editor.getText(rowStart, 60);
+			int length = Math.min(60, editor.getDocument().getLength() - rowStart);
+			String text = editor.getText(rowStart, length);
 			Matcher matcher = pattern.matcher(text);
 			if (matcher.find()) {
 				String adrsString = matcher.group(1);
