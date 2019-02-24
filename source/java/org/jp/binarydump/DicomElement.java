@@ -130,6 +130,7 @@ public class DicomElement {
 				in.read(bb);
 				StringBuffer sb = new StringBuffer();
 				for (byte b : bb) sb.append(String.format("\\%02x",b));
+				if (len > 10) sb.append(" ...");
 				return sb.toString();
 			}
 			else if (vr.equals("UL") || vr.equals("SL")) {

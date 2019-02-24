@@ -22,6 +22,7 @@ public class BinaryDump extends JFrame {
     PropertiesFile  props = null;
     LinkedList<String> recent = null;
     JMenu			recentMenu = null;
+    WindowCloser	closer;
 
     public static void main(String[] args) {
         new BinaryDump();
@@ -30,19 +31,25 @@ public class BinaryDump extends JFrame {
     public BinaryDump() {
 		props = new PropertiesFile(new File("BinaryDump.properties"));
 		recent = getRecentFiles();
+		closer = new WindowCloser(this);
+		addWindowListener(closer);
     	initComponents();
     	openFile();
     }
 
 	private void openFile() {
 		if (chooser == null) {
-			File here = new File(System.getProperty("user.dir"));
-			String dir = props.getProperty("dir");
-			if (dir != null) {
-				File dirFile = new File(dir);
-				if (dirFile.exists()) here = dirFile;
+			File here = getMostRecentFile();
+			if ((here == null) || !here.exists()) {
+				here = new File(System.getProperty("user.dir"));
+				String dir = props.getProperty("dir");
+				if (dir != null) {
+					File dirFile = new File(dir);
+					if (dirFile.exists()) here = dirFile;
+				}
 			}
 			chooser = new JFileChooser(here);
+			if (here.isFile()) chooser.setSelectedFile(here);
 			chooser.getActionMap().get("viewTypeDetails").actionPerformed(null);
 		}
 		if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
@@ -80,6 +87,12 @@ public class BinaryDump extends JFrame {
 			if (key.startsWith("recent[")) recent.add(props.getProperty(key));
 		}
 		return recent;
+	}
+	
+	private File getMostRecentFile() {
+		LinkedList<String> recent = getRecentFiles();
+		if (recent.size() > 0) return new File(recent.peekFirst());
+		return null;
 	}
 
 	private void addRecentFile(File file) {
@@ -186,7 +199,7 @@ public class BinaryDump extends JFrame {
 		JMenuItem exitItem = new JMenuItem("Exit");
 		exitItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				exitApp();
+				closer.close();
 			}
 		});
 		fileMenu.add(exitItem);
@@ -202,15 +215,8 @@ public class BinaryDump extends JFrame {
 		main.add(footerPanel,BorderLayout.SOUTH);
 		getContentPane().add(main, BorderLayout.CENTER);
 		pack();
-		centerFrame();
+		positionFrame();
 		this.setVisible(true);
-		addWindowListener(
-			new WindowAdapter() {
-				public void windowClosing(WindowEvent evt) {
-					exitApp();
-				}
-			}
-		);
 		addComponentListener(
 			new ComponentAdapter() {
 				public void componentResized(ComponentEvent evt) {
@@ -218,22 +224,6 @@ public class BinaryDump extends JFrame {
 				}
 			}
 		);
-    }
-
-    private void centerFrame() {
-		Toolkit t = getToolkit();
-		Dimension scr = t.getScreenSize ();
-		Dimension size = new Dimension(width, height);
-		setPreferredSize(size);
-		setSize(size);
-		setLocation(
-			new Point(
-				(scr.width - width)/2,
-				(scr.height - height)/2));
-    }
-
-    private void exitApp() {
-		System.exit(0);
     }
 
     private void resize(ComponentEvent evt) {
@@ -412,6 +402,71 @@ public class BinaryDump extends JFrame {
 			if ((b >= (byte)0x20) && (b <= (byte)0x7f)) return new String( c );
 			return ".";
 		}
+	}
+
+    class WindowCloser extends WindowAdapter {
+		JFrame parent;
+		public WindowCloser(JFrame parent) {
+			this.parent = parent;
+		}
+		public void windowClosing(WindowEvent evt) {
+			close();
+		}
+		public void close() {
+			Point p = getLocation();
+			props.put("x", Integer.toString(p.x));
+			props.put("y", Integer.toString(p.y));
+			Toolkit t = getToolkit();
+			Dimension d = parent.getSize ();
+			props.put("w", Integer.toString(d.width));
+			props.put("h", Integer.toString(d.height));
+			props.store();
+			System.exit(0);
+		}
+    }
+
+	private void positionFrame() {
+		int x = getInt( props.getProperty("x"), 0 );
+		int y = getInt( props.getProperty("y"), 0 );
+		int w = getInt( props.getProperty("w"), 0 );
+		int h = getInt( props.getProperty("h"), 0 );
+		boolean noProps = ((w == 0) || (h == 0));
+		int wmin = 550;
+		int hmin = 600;
+		if ((w < wmin) || (h < hmin)) {
+			w = wmin;
+			h = hmin;
+		}
+		if ( noProps || !screensCanShow(x, y) || !screensCanShow(x+w-1, y+h-1) ) {
+			Toolkit t = getToolkit();
+			Dimension scr = t.getScreenSize ();
+			x = (scr.width - wmin)/2;
+			y = (scr.height - hmin)/2;
+			w = wmin;
+			h = hmin;
+		}
+		setSize( w, h );
+		setLocation( x, y );
+	}
+
+	private boolean screensCanShow(int x, int y) {
+		GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
+		GraphicsDevice[] screens = env.getScreenDevices();
+		for (GraphicsDevice screen : screens) {
+			GraphicsConfiguration[] configs = screen.getConfigurations();
+			for (GraphicsConfiguration gc : configs) {
+				if (gc.getBounds().contains(x, y)) return true;
+			}
+		}
+		return false;
+	}
+	
+	private int getInt(String theString, int defaultValue) {
+		if (theString == null) return defaultValue;
+		theString = theString.trim();
+		if (theString.equals("")) return defaultValue;
+		try { return Integer.parseInt(theString); }
+		catch (NumberFormatException e) { return defaultValue; }
 	}
 
 }
