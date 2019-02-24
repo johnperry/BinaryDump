@@ -94,6 +94,14 @@ public class DicomParser extends Parser implements MouseListener, MouseMotionLis
 			listbotItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_B, InputEvent.CTRL_MASK));
 			menu.add(listbotItem);
 
+			JMenuItem saveFrameItem = new JMenuItem("Save Frames");
+			saveFrameItem.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent evt) {
+					saveFrames();
+				}
+			});
+			menu.add(saveFrameItem);
+
 			JMenuItem truncateItem = new JMenuItem("Truncate after Pixels");
 			truncateItem.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent evt) {
@@ -182,6 +190,27 @@ public class DicomParser extends Parser implements MouseListener, MouseMotionLis
 			}
 		}
 	}
+	
+	private LinkedList<DicomElement> getFrameItemTags() {
+		LinkedList<DicomElement> list = new LinkedList<DicomElement>();
+		if (pixels != null) {
+			int pixelsIndex = elementList.indexOf(pixels);
+			ListIterator<DicomElement> it = elementList.listIterator(pixelsIndex);
+			DicomElement de;
+			if (it.hasNext()) it.next(); //skip the Pixels tag
+			if (it.hasNext()) {
+				de = it.next(); //skip the Basic Offset Table item tag
+				if (de.isItemTag()) {
+					while (it.hasNext()) {
+						de = it.next();
+						if (de.isItemTag()) list.add(de);
+						else break;
+					}
+				}
+			}
+		}
+		return list;
+	}
 
 	//MouseListener
 	public void mouseClicked(MouseEvent e) { }
@@ -249,6 +278,36 @@ public class DicomParser extends Parser implements MouseListener, MouseMotionLis
 							else break;
 						}
 					}
+				}
+				catch (Exception ex) { }
+				finally {
+					if (bos != null) {
+						try { bos.flush(); }
+						catch (Exception ignore) { }
+						try { bos.close(); }
+						catch (Exception ignore) { }
+					}
+				}
+			}
+		}
+	}
+
+	private void saveFrames() {
+		File outputFile = null;
+		if (pixels != null) {
+			File file = parent.dataFile;
+			File dir = file.getParentFile();
+			dir = new File(dir, file.getName() + "-frames");
+			dir.mkdirs();
+			LinkedList<DicomElement> itemTags = getFrameItemTags();
+			int frameNumber = 1;
+			for (DicomElement de : itemTags) {
+				BufferedOutputStream bos = null;
+				try {
+					String name = String.format("%s-frame%04d.jpeg", file.getName(), (frameNumber++));
+					outputFile = new File(dir, name);
+					bos = new BufferedOutputStream(new FileOutputStream(outputFile));
+					write(bos, de.valueAdrs, de.lenValue);
 				}
 				catch (Exception ex) { }
 				finally {
