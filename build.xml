@@ -9,7 +9,6 @@
 
 	<property name="libraries" value="${basedir}/libraries"/>
 	<property name="products" value="${basedir}/products"/>
-	<property name="run" value="${basedir}/run"/>
 
 	<target name="clean">
 		<delete dir="${build}" failonerror="false"/>
@@ -24,7 +23,6 @@
 		<echo message="Time now ${now}"/>
 		<mkdir dir="${build}"/>
 		<mkdir dir="${products}"/>
-		<mkdir dir="${run}"/>
 	</target>
 
 	<target name="binarydump" depends="init">

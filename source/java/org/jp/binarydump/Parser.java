@@ -12,13 +12,15 @@ public class Parser {
 	BinaryDump parent;
 
 	public static Parser getInstance(BinaryDump parent, RandomAccessFile in) {
-		Parser parser = new DicomParser(parent,in);
+		Parser parser = new DicomParser(parent, in);
 		if (parser.isType()) return parser;
 		parser = new WaveParser(parent, in);
 		if (parser.isType()) return parser;
 		parser = new JPEGParser(parent, in);
 		if (parser.isType()) return parser;
-		return new Parser(parent,in);
+		parser = new PNGParser(parent, in);
+		if (parser.isType()) return parser;
+		return new Parser(parent, in);
 	}
 
 	public Parser(BinaryDump parent, RandomAccessFile in) {
