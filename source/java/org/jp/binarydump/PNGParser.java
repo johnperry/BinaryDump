@@ -2,11 +2,14 @@ package org.jp.binarydump;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.io.ByteArrayOutputStream;
 import java.io.RandomAccessFile;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.ListIterator;
 import java.util.regex.*;
+import java.util.zip.*;
 import javax.swing.*;
 import javax.swing.text.*;
 
@@ -17,7 +20,9 @@ public class PNGParser extends Parser implements MouseListener {
 	ScrolledEditorPanel editorPanel = null;
 	JEditorPane editor = null;
 	
-	byte[] header = { (byte)0x89, (byte)0x50, (byte)0x4e, (byte)0x47, (byte)0x0D, (byte)0x0A, (byte)0x1A, (byte)0x0A };
+	static final Charset latin1 = Charset.forName("ISO-8859-1");
+	static final Charset utf8 = Charset.forName("UTF-8");
+	static byte[] header = { (byte)0x89, (byte)0x50, (byte)0x4e, (byte)0x47, (byte)0x0D, (byte)0x0A, (byte)0x1A, (byte)0x0A };
 
 	public PNGParser(BinaryDump parent, RandomAccessFile in) {
 		super(parent, in);
@@ -89,7 +94,8 @@ public class PNGParser extends Parser implements MouseListener {
 			sb.append(it.next().listParams());
 		}
 		editor = editorPanel.getEditor();
-		editor.setText(sb.toString());		
+		editor.setText(sb.toString());
+		editor.setCaretPosition(0);
 		editor.addMouseListener(this);
 		listFrame.setVisible(true);
 		listFrame.attach();
@@ -151,7 +157,7 @@ public class PNGParser extends Parser implements MouseListener {
 		public String listParams() {
 			StringBuffer sb = new StringBuffer();
 			byte mask = 1<< 5;
-			sb.append(String.format("%08X/ type: %4s length: %08X\n", address, type, length));
+			sb.append(String.format("%08X/ type: %4s length: %04X [%d]\n", address, type, length, length));
 			String typeLC = type.toLowerCase();
 			if (!typeLC.equals("iend")) {
 				sb.append("   Safe-to-copy: "+(((typeBytes[3] & mask)!=0)?"1":"0")+"\n");
@@ -163,6 +169,13 @@ public class PNGParser extends Parser implements MouseListener {
 			else if (typeLC.equals("srgb")) listSRGBParams(sb);
 			else if (typeLC.equals("gama")) listGAMAParams(sb);
 			else if (typeLC.equals("phys")) listPHYSParams(sb);
+			else if (typeLC.equals("chrm")) listCHRMParams(sb);
+			else if (typeLC.equals("bkgd")) listBKGDParams(sb);
+			else if (typeLC.equals("splt")) listSPLTParams(sb);
+			else if (typeLC.equals("time")) listTIMEParams(sb);
+			else if (typeLC.equals("text")) listTEXTParams(sb);
+			else if (typeLC.equals("itxt")) listITXTParams(sb);
+			else if (typeLC.equals("ztxt")) listZTXTParams(sb);
 			return sb.toString();
 		}
 		String[] colorTypes = {"(grayscale)", "", "(RGB)", "(Palette index)", "(Grayscale with alpha)", "", "(RGB with alpha)"};
@@ -172,8 +185,7 @@ public class PNGParser extends Parser implements MouseListener {
 			int colorType = getIntBE(dataStart+9,1);
 			String colorTypeString = (colorType < colorTypes.length) ? colorTypes[colorType] : "";
 			int interlace = getIntBE(dataStart+12,1);
-			String interlaceString = (interlace==0) ? "(no interlace)" :
-										(interlace==1) ? "(Adam 7)" : "";
+			String interlaceString = (interlace==0) ? "(no interlace)" : (interlace==1) ? "(Adam 7)" : "";
 			sb.append("   Width:        "+getIntBE(dataStart,4)+"\n");
 			sb.append("   Height:       "+getIntBE(dataStart+4,4)+"\n");
 			sb.append("   Bit depth:    "+getIntBE(dataStart+8,1)+"\n");
@@ -203,8 +215,117 @@ public class PNGParser extends Parser implements MouseListener {
 			sb.append("   Pixels/unitY: "+yppu+"\n");
 			sb.append("   Unit:         "+unit+" "+s+"\n");
 		}
+		private void listCHRMParams(StringBuffer sb) {
+			sb.append("   White X:       "+getIntBE(dataStart,4)+"\n");
+			sb.append("   White Y:       "+getIntBE(dataStart+4,4)+"\n");
+			sb.append("   Red X:         "+getIntBE(dataStart+8,4)+"\n");
+			sb.append("   Red Y:         "+getIntBE(dataStart+12,4)+"\n");
+			sb.append("   Green X:       "+getIntBE(dataStart+16,4)+"\n");
+			sb.append("   Green Y:       "+getIntBE(dataStart+20,4)+"\n");
+			sb.append("   Blue X:        "+getIntBE(dataStart+24,4)+"\n");
+			sb.append("   Blue Y:        "+getIntBE(dataStart+28,4)+"\n");
+		}
+		private void listBKGDParams(StringBuffer sb) {
+			sb.append("   Red:           "+getIntBE(dataStart,2)+"\n");
+			sb.append("   Green:         "+getIntBE(dataStart+2,2)+"\n");
+			sb.append("   Blue:          "+getIntBE(dataStart+4,2)+"\n");
+		}
+		private void listTIMEParams(StringBuffer sb) {
+			int year = getIntBE(dataStart,2);
+			int month = getIntBE(dataStart+2,1);
+			int day = getIntBE(dataStart+3,1);
+			int hour = getIntBE(dataStart+4,1);
+			int minute = getIntBE(dataStart+5,1);
+			int second = getIntBE(dataStart+6,1);
+			sb.append(String.format("   Time:          %4d/%02d/%02d %02d:%02d:%02d\n", year, month, day, hour, minute, second));
+		}
+		private void listSPLTParams(StringBuffer sb) {
+			byte[] b = getBytes(dataStart, length);
+			int k = 0;
+			while (b[k] != 0) k++;
+			String name = new String(b, 0, k, latin1);
+			int depth = 0xFF & (int)b[k+1];
+			sb.append("   " + name + "\n");
+			sb.append("   Depth:         " + depth + "\n");			
+		}
+		private void listTEXTParams(StringBuffer sb) {
+			byte[] b = getBytes(dataStart, length);
+			int k = 0;
+			while (b[k] != 0) k++;
+			String keyword = new String(b, 0, k, latin1);
+			String value = new String(b, k+1, b.length-(k+1), latin1);
+			sb.append(String.format("   %s: %s\n", keyword, value));			
+		}
+		private void listZTXTParams(StringBuffer sb) {
+			byte[] b = getBytes(dataStart, length);
+			int k = 0;
+			while ((k < b.length) && (b[k] != 0)) k++;
+			String keyword = new String(b, 0, k, utf8);
+			sb.append(String.format("   %s\n", keyword));
+			int cMethod = 0xFF & (int)b[++k];
+			String cMethodMeaning = (cMethod==0) ? "(inflate/deflate)" : "(undefined)";
+			sb.append("   Method:        " + cMethod + " " + cMethodMeaning + "\n");
+			String text = "";
+			if (cMethod == 0) text = inflate(b, ++k, b.length, latin1);
+			sb.append("   " + text + "\n");
+		}
+		private void listITXTParams(StringBuffer sb) {
+			byte[] b = getBytes(dataStart, length);
+			int k = 0;
+			while ((k < b.length) && (b[k] != 0)) k++;
+			String keyword = new String(b, 0, k, utf8);
+			sb.append(String.format("   %s\n", keyword));
+			if (k < b.length - 2) {
+				int cFlag = 0xFF & (int)b[++k];
+				int cMethod = 0xFF & (int)b[++k];
+				String cFlagMeaning = (cFlag==0) ? "(uncompressed)" : (cFlag==1) ? "(compresed)" : "(undefined)";
+				String cMethodMeaning = (cMethod==0) ? "(inflate/deflate)" : "(undefined)";
+				sb.append("   Compression:   " + cFlag + " " + cFlagMeaning + "\n");
+				sb.append("   Method:        " + cMethod + " " + cMethodMeaning + "\n");
+				k++;
+				int kStart = k;
+				while ((k < b.length) && (b[k] != 0)) k++;
+				if (k < b.length) {
+					String language = new String(b, kStart, k, utf8);
+					sb.append("   Language:      " + language + "\n");
+					k++;
+					kStart = k;
+					while ((k < b.length) && (b[k] != 0)) k++;
+					if (k < b.length) {
+						String xKeyword = new String(b, kStart, k, utf8);
+						sb.append("   Translated kwd:"+ xKeyword + "\n");
+						k++;
+						if (k < b.length) {
+							String text = "";
+							if (cFlag == 0) text = new String(b, k, b.length, utf8);
+							else if (cMethod == 0) text = inflate(b, k, b.length, utf8);
+							sb.append("   " + text + "\n");
+						}
+					}
+				}
+			}
+		}
 	}
-
+	
+	private String inflate(byte[] b, int k1, int k2, Charset cs) {
+		String text = "";
+		try {
+			Inflater inflater = new Inflater();
+			inflater.setInput(b, k1, k2);
+			ByteArrayOutputStream outputStream = new ByteArrayOutputStream();  
+			byte[] buffer = new byte[1024];  
+			while (!inflater.finished()) {  
+			int count = inflater.inflate(buffer);  
+				outputStream.write(buffer, 0, count);  
+			}  
+			outputStream.close();
+			byte[] textBytes = outputStream.toByteArray();
+			text = new String(textBytes, cs);
+		}
+		catch (Exception ignore) { }
+		return text;
+	}
+	
 	private byte getByte(int adrs) {
 		byte b;
 		try {
