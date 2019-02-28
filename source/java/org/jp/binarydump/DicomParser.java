@@ -146,6 +146,7 @@ public class DicomParser extends Parser implements MouseListener, MouseMotionLis
 		}
 		editor = editorPanel.getEditor();
 		editor.setText(sb.toString());
+		editor.setCaretPosition(0);
 		editor.addMouseListener(this);
 		editor.addMouseMotionListener(this);
 		listFrame.setVisible(true);
