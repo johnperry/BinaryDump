@@ -41,6 +41,7 @@ public class AttachedFrame extends JFrame implements ComponentListener {
 	}
 	
 	public void attach() {
+		setVisible(true);
 		Dimension componentSize = parent.getSize();
 		Point componentLocation = parent.getLocation();
 		int x = componentLocation.x + componentSize.width;
@@ -75,9 +76,7 @@ public class AttachedFrame extends JFrame implements ComponentListener {
 	public void componentResized(ComponentEvent e) { reattach(); }
 	public void componentShown(ComponentEvent e) { }
 	private void reattach() {
-		if (this.isVisible()) {
-			attach();
-		}
+		attach();
 	}
 
 }
