@@ -132,9 +132,11 @@ public class DicomParser extends Parser implements MouseListener, MouseMotionLis
 	}
 
 	private void listElements() {
-		listFrame = new AttachedFrame(parent, parent.getFile().getName(), 750, Color.white);
-		editorPanel = new ScrolledEditorPanel();
-		listFrame.setCenterComponent(editorPanel);
+		if (listFrame == null) {
+			listFrame = new AttachedFrame(parent, parent.getFile().getName(), 750, Color.white);
+			editorPanel = new ScrolledEditorPanel();
+			listFrame.setCenterComponent(editorPanel);
+		}
 		ListIterator<DicomElement> it = elementList.listIterator(0);
 		StringBuffer sb = new StringBuffer();
 		if (dsc != null) sb.append(dsc.name + "\n\n");
@@ -177,9 +179,11 @@ public class DicomParser extends Parser implements MouseListener, MouseMotionLis
 									sb.append(String.format("%4d %12x %12x %12x  %s\n", (k+1), botInts[k], adrs, tag, ok));
 								}
 							}
-							botFrame = new AttachedFrame(parent, parent.getFile().getName(), 450, Color.white);
-							botPanel = new ScrolledEditorPanel();
-							botFrame.setCenterComponent(botPanel);
+							if (botFrame == null) {
+								botFrame = new AttachedFrame(parent, parent.getFile().getName(), 450, Color.white);
+								botPanel = new ScrolledEditorPanel();
+								botFrame.setCenterComponent(botPanel);
+							}
 							botEditor = botPanel.getEditor();
 							botEditor.setText(sb.toString());
 							botFrame.setVisible(true);
