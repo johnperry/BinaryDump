@@ -25,18 +25,41 @@ public class BinaryDump extends JFrame {
     WindowCloser	closer;
 
     public static void main(String[] args) {
-        new BinaryDump();
+        new BinaryDump(args);
     }
 
-    public BinaryDump() {
+    public BinaryDump(String[] args) {
 		props = new PropertiesFile(new File("BinaryDump.properties"));
 		recent = getRecentFiles();
 		closer = new WindowCloser(this);
 		addWindowListener(closer);
     	initComponents();
-    	openFile();
+    	if (args.length > 0) {
+			final String name = args[0];
+			Runnable r = new Runnable() {
+				public void run() {
+					openFile(name);
+				}
+			};
+			SwingUtilities.invokeLater(r);
+		}
+    	else openFile();
     }
 
+	private void openFile(String name) {
+		if (name != null){
+			name = name.trim();
+			if (!name.equals("")) {
+				File file = new File(name);
+				if (file.exists()) {
+					openFile(file);
+					return;
+				}
+			}
+		}
+		openFile();
+	}
+	
 	private void openFile() {
 		if (chooser == null) {
 			File here = getMostRecentFile();
@@ -54,20 +77,14 @@ public class BinaryDump extends JFrame {
 		}
 		if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
 			dataFile = chooser.getSelectedFile().getAbsoluteFile();
-			props.setProperty("dir", dataFile.getParentFile().getAbsolutePath());
 			openFile(dataFile);
 		}
 	}
 	
-	private void updateRecentFiles(File dataFile) {
-		addRecentFile(dataFile);
-		saveRecentFiles();
-		props.store();
-		setRecentMenuItems();
-	}
-
 	private void openFile(File dataFile) {
+   		footerPanel.setMessage(dataFile.getAbsolutePath());
 		this.dataFile = dataFile;
+		props.setProperty("dir", dataFile.getParentFile().getAbsolutePath());
 		setTitle(dataFile.getAbsolutePath());
 		textPanel.setFile(dataFile);
 		JMenuBar jmb = getJMenuBar();
@@ -76,6 +93,13 @@ public class BinaryDump extends JFrame {
 		if (parserMenu != null) jmb.add(parserMenu);
 		setJMenuBar(jmb);
 		updateRecentFiles(dataFile);
+	}
+
+	private void updateRecentFiles(File dataFile) {
+		addRecentFile(dataFile);
+		saveRecentFiles();
+		props.store();
+		setRecentMenuItems();
 	}
 
 	private LinkedList<String> getRecentFiles() {
