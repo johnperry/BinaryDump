@@ -1838,7 +1838,7 @@ public class DicomDictionary {
 		store("RowOverlap", "(0028,0093)");
 		store("ColumnOverlap", "(0028,0094)");
 		store("BitsAllocated", "(0028,0100)");
-		store("Bitsstore(d", "(0028,0101)");
+		store("Bitsstored", "(0028,0101)");
 		store("HighBit", "(0028,0102)");
 		store("PixelRepresentation", "(0028,0103)");
 		store("SmallestValidPixelValue", "(0028,0104)");
