@@ -1,6 +1,8 @@
 package org.jp.binarydump;
 
 import java.awt.*;
+import java.awt.datatransfer.*;
+import java.awt.dnd.*;
 import java.awt.event.*;
 import java.io.*;
 import java.util.*;
@@ -34,6 +36,7 @@ public class BinaryDump extends JFrame {
 		closer = new WindowCloser(this);
 		addWindowListener(closer);
     	initComponents();
+    	new DropTarget(textPanel.getColorPane(), new FileDropTargetListener());
     	if (args.length > 0) {
 			final String name = args[0];
 			Runnable r = new Runnable() {
@@ -45,6 +48,26 @@ public class BinaryDump extends JFrame {
 		}
     	else openFile();
     }
+    
+    class FileDropTargetListener implements DropTargetListener {
+		public FileDropTargetListener() {
+			super();
+		}
+		public void dragEnter(DropTargetDragEvent dtde) { }
+		public void dragExit(DropTargetEvent dte) { }
+		public void dragOver(DropTargetDragEvent dtde) { }
+		public void dropActionChanged(DropTargetDragEvent dtde) { }
+		public void drop(DropTargetDropEvent dtde) {
+			 dtde.acceptDrop(DnDConstants.ACTION_COPY);
+			 Transferable transferable = dtde.getTransferable();
+			 try {
+				 @SuppressWarnings("unchecked") // Transferable when called with DataFlavor javaFileList is guaranteed to return a File List.
+				 java.util.List<File> files = (java.util.List<File>) transferable.getTransferData(DataFlavor.javaFileListFlavor);
+				 if (!files.isEmpty()) openFile(files.get(0));
+			 }
+			 catch (Exception ex) { ex.printStackTrace(); }
+		}		
+	}
 
 	private void openFile(String name) {
 		if (name != null){
@@ -296,6 +319,10 @@ public class BinaryDump extends JFrame {
 			text.addMouseWheelListener(this);
         	add(scrollbar, BorderLayout.EAST);
         	add(text, BorderLayout.CENTER);
+		}
+		
+		public ColorPane getColorPane() {
+			return text;
 		}
 
 		void setFile(File file) {

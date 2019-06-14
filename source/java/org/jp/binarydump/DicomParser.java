@@ -110,24 +110,24 @@ public class DicomParser extends Parser implements MouseListener, MouseMotionLis
 			});
 			truncateItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.CTRL_MASK));
 			menu.add(truncateItem);
-
-			JMenuItem removePrivateGroupsItem = new JMenuItem("Remove Private Groups");
-			removePrivateGroupsItem.addActionListener(new ActionListener() {
-				public void actionPerformed(ActionEvent evt) {
-					removePrivateGroups();
-				}
-			});
-			removePrivateGroupsItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.CTRL_MASK));
-			menu.add(removePrivateGroupsItem);
-
-			JMenuItem fixGroupLengthElementsItem = new JMenuItem("Fix Group Length Elements");
-			fixGroupLengthElementsItem.addActionListener(new ActionListener() {
-				public void actionPerformed(ActionEvent evt) {
-					fixGroupLengthElements();
-				}
-			});
-			menu.add(fixGroupLengthElementsItem);
 		}
+
+		JMenuItem removePrivateGroupsItem = new JMenuItem("Remove Private Groups");
+		removePrivateGroupsItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				removePrivateGroups();
+			}
+		});
+		removePrivateGroupsItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.CTRL_MASK));
+		menu.add(removePrivateGroupsItem);
+
+		JMenuItem fixGroupLengthElementsItem = new JMenuItem("Fix Group Length Elements");
+		fixGroupLengthElementsItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				fixGroupLengthElements();
+			}
+		});
+		menu.add(fixGroupLengthElementsItem);
 		return menu;
 	}
 
@@ -416,15 +416,15 @@ public class DicomParser extends Parser implements MouseListener, MouseMotionLis
 					else {
 						int lengthToEnd = 0;
 						DicomElement nextGroup = nextGroupAfter(currentElement);
-						//System.out.println(Integer.toHexString(currentElement.tag)+
-						//				": nextGroup: "+((nextGroup==null) ? "null" : Integer.toHexString(nextGroup.tag)));
+						System.out.println(Integer.toHexString(currentElement.tag)+
+										": nextGroup: "+((nextGroup==null) ? "null" : Integer.toHexString(nextGroup.tag)));
 						if (nextGroup != null) {
 							lengthToEnd = nextGroup.tagAdrs - currentElement.tagAdrs - currentElement.length;
 						}
 						else {
 							lengthToEnd = (int)parent.getFile().length() - currentElement.tagAdrs - currentElement.length;
-							//System.out.println("...lengthToEnd = "+Integer.toHexString(lengthToEnd));
 						}
+						//System.out.println("...lengthToEnd = "+Integer.toHexString(lengthToEnd));
 						write(bos, currentElement, lengthToEnd);
 					}
 					if (currentElement.isPixels()) break;
