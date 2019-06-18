@@ -6,7 +6,7 @@ import java.nio.ByteOrder;
 
 public class DicomElement {
 
-	static String[] vrs = new String[] { "OB", "OW", "OF", "SQ", "UT", "UN", "OD", "OL", "UC", "UR" };
+	static String[] vrs = new String[] { "OB", "OD", "OF", "OL", "OW", "SQ", "UC", "UR", "UT", "UN" };
 
 	public int tag;
 	public int tagAdrs;
@@ -94,12 +94,12 @@ public class DicomElement {
 		in.seek(adrs);
 		in.read(b);
 		if (len == 2) {
-			if (le) return ((b[1]<<8) + (b[0] & 0xff)) & 0xffff;
-			else return ((b[0]<<8) + (b[1] & 0xff)) & 0xffff;
+			if (le) return ((b[1]<<8) | (b[0] & 0xff)) & 0xffff;
+			else return ((b[0]<<8) | (b[1] & 0xff)) & 0xffff;
 		}
 		else {
-			if (le) return (((b[3]<<8) | (b[2] & 0xff))<<8 | (b[1] & 0xff))<<8 | (b[0] & 0xff);
-			else return (((b[0]<<8) | (b[1] & 0xff))<<8 | (b[2] & 0xff))<<8 | (b[3] & 0xff);
+			if (le) return (b[3]<<24) | ((b[2] & 0xff)<<16) | ((b[1] & 0xff)<<8) | (b[0] & 0xff);
+			else return (b[0]<<24) | ((b[1] & 0xff)<<16) | ((b[2] & 0xff)<<8) | (b[3] & 0xff);
 		}
 	}
 
