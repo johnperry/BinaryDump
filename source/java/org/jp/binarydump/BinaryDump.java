@@ -46,7 +46,7 @@ public class BinaryDump extends JFrame {
 			};
 			SwingUtilities.invokeLater(r);
 		}
-    	else openFile();
+    	//else openFile();
     }
     
     class FileDropTargetListener implements DropTargetListener {
