@@ -15,6 +15,9 @@
 	</target>
 
 	<target name="init">
+		<echo message="=================================================="/>
+		<echo message="Building ${ant.project.name}"/>
+		<echo message="=================================================="/>
 		<mkdir dir="${build}"/>
 		<tstamp>
 			<format property="today" pattern="yyyy.MM.dd"/>
