@@ -73,7 +73,7 @@ public class DicomParser extends Parser implements MouseListener, MouseMotionLis
 				listElements();
 			}
 		});
-		listItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L, InputEvent.CTRL_MASK));
+		listItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L, InputEvent.CTRL_DOWN_MASK));
 		menu.add(listItem);
 		if (pixels != null) {
 			JMenuItem saveItem = new JMenuItem("Save Pixels");
@@ -82,7 +82,7 @@ public class DicomParser extends Parser implements MouseListener, MouseMotionLis
 					savePixels();
 				}
 			});
-			saveItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK));
+			saveItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK));
 			menu.add(saveItem);
 
 			JMenuItem listbotItem = new JMenuItem("Check BasicOffsetTable");
@@ -91,7 +91,7 @@ public class DicomParser extends Parser implements MouseListener, MouseMotionLis
 					listBasicOffsetTable();
 				}
 			});
-			listbotItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_B, InputEvent.CTRL_MASK));
+			listbotItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_B, InputEvent.CTRL_DOWN_MASK));
 			menu.add(listbotItem);
 
 			JMenuItem saveFrameItem = new JMenuItem("Save Frames");
@@ -108,7 +108,7 @@ public class DicomParser extends Parser implements MouseListener, MouseMotionLis
 					truncate();
 				}
 			});
-			truncateItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.CTRL_MASK));
+			truncateItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK));
 			menu.add(truncateItem);
 		}
 
@@ -118,7 +118,7 @@ public class DicomParser extends Parser implements MouseListener, MouseMotionLis
 				removePrivateGroups();
 			}
 		});
-		removePrivateGroupsItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.CTRL_MASK));
+		removePrivateGroupsItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.CTRL_DOWN_MASK));
 		menu.add(removePrivateGroupsItem);
 
 		JMenuItem fixGroupLengthElementsItem = new JMenuItem("Fix Group Length Elements");
@@ -233,7 +233,7 @@ public class DicomParser extends Parser implements MouseListener, MouseMotionLis
 	public void mouseDragged(MouseEvent e) { }
 	public void mouseMoved(MouseEvent e) {
 		if (editor != null) {
-			int dot = editor.viewToModel(e.getPoint());
+			int dot = editor.viewToModel2D(e.getPoint());
 			showElement(dot, false);
 		}
 	}

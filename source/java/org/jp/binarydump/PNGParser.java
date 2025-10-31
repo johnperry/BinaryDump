@@ -75,7 +75,7 @@ public class PNGParser extends Parser implements MouseListener {
 				listParams();
 			}
 		});
-		listItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L,InputEvent.CTRL_MASK));
+		listItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L,InputEvent.CTRL_DOWN_MASK));
 		menu.add(listItem);
 		return menu;
 	}

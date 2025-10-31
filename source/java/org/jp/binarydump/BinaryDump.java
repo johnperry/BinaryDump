@@ -213,7 +213,7 @@ public class BinaryDump extends JFrame {
 		fileMenu.setText("File");
 
 		JMenuItem openItem = new JMenuItem("Open file...");
-		openItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O,InputEvent.CTRL_MASK));
+		openItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O,InputEvent.CTRL_DOWN_MASK));
 		openItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
 				openFile();
@@ -227,7 +227,7 @@ public class BinaryDump extends JFrame {
 		setRecentMenuItems();
 
 		JMenuItem gotoItem = new JMenuItem("Go to...");
-		gotoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G,InputEvent.CTRL_MASK));
+		gotoItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G,InputEvent.CTRL_DOWN_MASK));
 		gotoItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
 				gotoAddress();

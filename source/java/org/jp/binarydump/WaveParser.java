@@ -47,7 +47,7 @@ public class WaveParser extends Parser {
 				listParams();
 			}
 		});
-		listItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L,InputEvent.CTRL_MASK));
+		listItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L,InputEvent.CTRL_DOWN_MASK));
 		menu.add(listItem);
 		JMenuItem resetSampleRateItem = new JMenuItem("Reset Sample Rate");
 		resetSampleRateItem.addActionListener(new ActionListener() {
@@ -55,7 +55,7 @@ public class WaveParser extends Parser {
 				resetSampleRate();
 			}
 		});
-		resetSampleRateItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R,InputEvent.CTRL_MASK));
+		resetSampleRateItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R,InputEvent.CTRL_DOWN_MASK));
 		menu.add(resetSampleRateItem);
 		return menu;
 	}
